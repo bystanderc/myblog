@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="chen.dao.ArticleDtoMapper">
+    <resultMap id="BaseResultMap" type="chen.dto.ArticleDto">
+        <id column="articleId" property="articleId" />
+        <result column="title" property="title" />
+        <result column="content" property="content" />
+        <result column="pubDate" property="pubDate" jdbcType="TIMESTAMP" />
+        <result column="clicks" property="clicks" />
+        <result column="image" property="image" />
+
+        <association property="category" column="categoryId" select="chen.dao.CategoryDtoMapper.selectByPrimaryKey" />
+        <association property="user" column="userId" select="chen.dao.UserDtoMapper.selectByPrimaryKey" />
+    </resultMap>
+
+
+    <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+        select
+        articleId,categoryId,userId, title,content,pubDate, clicks, image
+        from blog_article
+        where articleId = #{articleId,jdbcType=INTEGER}
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+        delete from blog_article
+        where articleId = #{articleid,jdbcType=INTEGER}
+    </delete>
+
+    <insert id="insert" parameterType="chen.entity.Article">
+        insert into blog_article (articleId, categoryId, userId,
+        title, pubDate, clicks,
+        image, content)
+        values (null, #{categoryId,jdbcType=INTEGER}, #{userId,jdbcType=INTEGER},
+        #{title,jdbcType=VARCHAR}, #{pubDate,jdbcType=TIMESTAMP}, 0,
+        #{image,jdbcType=VARCHAR}, #{content,jdbcType=LONGVARCHAR})
+    </insert>
+
+    <update id="updateByPrimaryKey" parameterType="chen.entity.Article">
+        update blog_article
+        set
+        title = #{title,jdbcType=VARCHAR},
+        content = #{content},
+        image = #{image,jdbcType=VARCHAR}
+        where articleId = #{articleId,jdbcType=INTEGER}
+    </update>
+
+    <select id="getAbout" resultType="chen.dto.AboutDto">
+        select content
+        from blog_article
+        where categoryId = 1
+    </select>
+
+    <update id="updateAbout" parameterType="string">
+    update blog_article
+    set content = #{content}
+    where categoryId = 1
+  </update>
+
+    <select id="getArticles" resultMap="BaseResultMap">
+    select articleId, categoryId, userId, title, content, pubDate, clicks, image
+    from blog_article
+    where categoryId > 1
+    order by pubDate desc
+  </select>
+
+    <select id="getArticlesByCategoryId" parameterType="int" resultType="chen.entity.ArticleLite">
+    select articleId, title, pubDate
+    from blog_article
+    where categoryId = #{id}
+  </select>
+
+    <select id="getPreArticle" resultType="chen.entity.ArticleLite" parameterType="int">
+    select articleId, title, pubDate
+    from blog_article
+    where articleId = (select articleId from blog_article where articleId <![CDATA[ < ]]> #{id} and categoryId > 1
+    order by articleId desc limit 1)
+  </select>
+
+    <select id="getNextArticle" resultType="chen.entity.ArticleLite" parameterType="int">
+    select articleId, title, pubDate
+    from blog_article
+    where articleId = (select articleId from blog_article where articleId > #{id} and categoryId > 1
+    order by articleId asc limit 1)
+  </select>
+
+    <update id="addClick" parameterType="int">
+    update blog_article
+    set clicks = clicks + 1
+    where articleId = #{articleId}
+  </update>
+
+    <select id="getRecentArticles" resultType="chen.entity.ArticleLite">
+    select articleId, title
+    from blog_article
+    where categoryId > 1
+    order by pubDate desc
+    limit 0,5
+  </select>
+
+    <select id="getMostViewedArticles" resultType="chen.entity.ArticleLite">
+   select articleId, title
+    from blog_article
+    where categoryId > 1
+    order by clicks desc
+    limit 0,5
+  </select>
+
+    <select id="getArticlesByKey" resultMap="BaseResultMap" parameterType="string">
+        select *
+        from blog_article
+        where title like concat('%', #{_parameter}, '%')
+        and categoryId > 1
+        order by pubDate desc
+
+    </select>
+    
+
+</mapper>
